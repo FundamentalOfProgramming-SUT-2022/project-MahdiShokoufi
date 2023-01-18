@@ -53,8 +53,46 @@ int createFile(char *pth){
     return 1; //file created
 }
 
-int insertString(char *pth, char *str, int line, int indx){
-    return 0;
+int insert(char *pth, char *str, int line, int indx){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    FILE *f = fopen(pth, "r");
+    char txt[1000][1000], tmp[1000];
+    int cntLine = 0;
+    for (int i = 1; fgets(txt[i], 1000, f) != NULL; i ++, cntLine ++);
+    for (int i = 0; i < indx; i ++)
+        tmp[i] = txt[line][i];
+    int strLen = strlen(str), lineLen = strlen(txt[line]);
+    for (int i = 0; i < strLen; i ++)
+        tmp[i + indx] = str[i];
+    for (int i = indx; i < lineLen; i ++)
+        tmp[i + strLen] = txt[line][i];
+    tmp[lineLen + strLen] = '\0';
+    fclose(f);
+    f = fopen(pth, "w");
+    for (int i = 1; i <= cntLine; i ++){
+        if (i == line)
+            fputs(tmp, f);
+        else
+            fputs(txt[i], f);
+    }
+    fclose(f);
+    return 1; //successfull
+}
+
+int cat(char *pth){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    FILE *f = fopen(pth, "r");
+    char s[1000];
+    while (fgets(s, 1000, f) != NULL)
+        printf("%s", s);
+    fclose(f);
+    return 1; //successfull
 }
 
 int main(){
