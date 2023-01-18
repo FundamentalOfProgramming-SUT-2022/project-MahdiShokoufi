@@ -168,6 +168,15 @@ int cut(char *pth, int line, int indx, int size, int dir){
     return 1; //successfull 
 }
 
+int paste(char *pth, int line, int indx){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    insertStr(pth, clipboard, line, indx);
+    return 1; //successfull
+}
+
 int main(){
     int end = 0;
     while (!end)
