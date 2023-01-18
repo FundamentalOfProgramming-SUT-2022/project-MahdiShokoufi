@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+char clipboard[1000 * 1000];
+
 int parse(){
     return 1;
 }
@@ -124,6 +126,35 @@ int removeStr(char *pth, int line, int indx, int size, int dir){
     for (int i = en; i < ptr; i ++)
         fputc(txt[i], f);
     fclose(f);
+    return 1; //successfull
+}
+
+int copy(char *pth, int line, int indx, int size, int dir){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    FILE *f = fopen(pth, "r");
+    char txt[1000 * 1000], tmp[1000];
+    int ptr = 0, curLine = 0, pos = -1;
+    while (fgets(tmp, 1000, f) != NULL){
+        int len = strlen(tmp);
+        curLine ++;
+        for (int i = 0; i < len; i ++){
+            txt[ptr ++] = tmp[i];
+            if (curLine == line && i == indx)
+                pos = ptr - 1;
+        }
+    }
+    fclose(f);
+    int st, en;
+    if (dir == -1)
+        st = pos - size, en = pos; //backward
+    else
+        st = pos, en = pos + size; //forward
+    for (int i = st; i < en; i ++)
+        clipboard[i - st] = txt[i];
+    clipboard[size] = '\0';
     return 1; //successfull
 }
 
