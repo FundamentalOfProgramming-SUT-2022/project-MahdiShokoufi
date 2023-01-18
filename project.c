@@ -53,7 +53,7 @@ int createFile(char *pth){
     return 1; //file created
 }
 
-int insert(char *pth, char *str, int line, int indx){
+int insertStr(char *pth, char *str, int line, int indx){
     if (!isPathExist(pth))
         return -1; //wrong path
     if (!isFileExist(pth))
@@ -91,6 +91,38 @@ int cat(char *pth){
     char s[1000];
     while (fgets(s, 1000, f) != NULL)
         printf("%s", s);
+    fclose(f);
+    return 1; //successfull
+}
+
+int removeStr(char *pth, int line, int indx, int size, int dir){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    FILE *f = fopen(pth, "r");
+    char txt[1000 * 1000], tmp[1000];
+    int ptr = 0, curLine = 0, pos = -1;
+    while (fgets(tmp, 1000, f) != NULL){
+        int len = strlen(tmp);
+        curLine ++;
+        for (int i = 0; i < len; i ++){
+            txt[ptr ++] = tmp[i];
+            if (curLine == line && i == indx)
+                pos = ptr - 1;
+        }
+    }
+    fclose(f);
+    int st, en;
+    if (dir == -1)
+        st = pos - size, en = pos; //backward
+    else
+        st = pos, en = pos + size; //forward
+    f = fopen(pth, "w");
+    for (int i = 0; i < st; i ++)
+        fputc(txt[i], f);
+    for (int i = en; i < ptr; i ++)
+        fputc(txt[i], f);
     fclose(f);
     return 1; //successfull
 }
