@@ -158,6 +158,16 @@ int copy(char *pth, int line, int indx, int size, int dir){
     return 1; //successfull
 }
 
+int cut(char *pth, int line, int indx, int size, int dir){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    copy(pth, line, indx, size, dir);
+    removeStr(pth, line, indx, size, dir);
+    return 1; //successfull 
+}
+
 int main(){
     int end = 0;
     while (!end)
