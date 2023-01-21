@@ -93,6 +93,7 @@ int cat(char *pth){
     char s[1000];
     while (fgets(s, 1000, f) != NULL)
         printf("%s", s);
+    printf("\n");
     fclose(f);
     return 1; //successfull
 }
@@ -174,6 +175,73 @@ int paste(char *pth, int line, int indx){
     if (!isFileExist(pth))
         return -2; //wrong file
     insertStr(pth, clipboard, line, indx);
+    return 1; //successfull
+}
+
+int compare(char *pth1, char *pth2){
+    if (!isPathExist(pth1))
+        return -1; //wrong path1
+    if (!isPathExist(pth2))
+        return -2; //wrong path2
+    if (!isFileExist(pth1))
+        return -3; //wrong file1
+    if (!isFileExist(pth2))
+        return -4; //wrong file2
+    FILE *f1 = fopen(pth1, "r");
+    FILE *f2 = fopen(pth2, "r");
+    char s1[1000], s2[1000];
+    int flg1 = fgets(s1, 1000, f1) != NULL;
+    int flg2 = fgets(s2, 1000, f2) != NULL;
+    int line = 0;
+    while (flg1 && flg2){
+        line ++;
+        if (strcmp(s1, s2)){
+            printf("============ #%d ============\n", line);
+            printf("%s", s1);
+            if (s1[strlen(s1) - 1] != '\n')
+                printf("\n");
+            printf("%s", s2);
+            if (s2[strlen(s2) - 1] != '\n')
+                printf("\n");
+        }
+        flg1 = fgets(s1, 1000, f1) != NULL;
+        flg2 = fgets(s2, 1000, f2) != NULL;
+    }
+    line ++;
+    if (flg1){
+        char tmp[1000][1000];
+        int len = strlen(s1);
+        for (int i = 0; i < len; i ++)
+            tmp[0][i] = s1[i];
+        tmp[0][len] = '\0';
+        int ptr = 0;
+        while (flg1)
+            flg1 = fgets(tmp[++ ptr], 1000, f1) != NULL;
+        printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", line, line + ptr - 1);
+        for (int i = 0; i < ptr; i ++){
+            printf("%s", tmp[i]);
+            if (tmp[i][strlen(tmp[i]) - 1] != '\n')
+                printf("\n");
+        }
+    }
+    if (flg2){
+        char tmp[1000][1000];
+        int len = strlen(s2);
+        for (int i = 0; i < len; i ++)
+            tmp[0][i] = s2[i];
+        tmp[0][len] = '\0';
+        int ptr = 0;
+        while (flg2)
+            flg2 = fgets(tmp[++ ptr], 1000, f2) != NULL;
+        printf(">>>>>>>>>>>> #%d - #%d >>>>>>>>>>>>\n", line, line + ptr - 1);
+        for (int i = 0; i < ptr; i ++){
+            printf("%s", tmp[i]);
+            if (tmp[i][strlen(tmp[i]) - 1] != '\n')
+                printf("\n");
+        }
+    }
+    fclose(f1);
+    fclose(f2);
     return 1; //successfull
 }
 
