@@ -3,6 +3,7 @@
 #include <io.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 char clipboard[1000 * 1000];
 
@@ -243,6 +244,52 @@ int compare(char *pth1, char *pth2){
     fclose(f1);
     fclose(f2);
     return 1; //successfull
+}
+
+void tree(char *pth, int dep, int cdp){
+    //should call with ("root/", dep, 0)
+    if (dep == 0)
+        return;
+    DIR *d = opendir(pth);
+    struct dirent *dir;
+    int len = strlen(pth);
+    while ((dir = readdir(d)) != NULL){
+        if (dir->d_name[0] == '.')
+            continue;
+        int dlen = strlen(dir->d_name);
+        for (int i = 0; i < dlen; i ++)
+            pth[len + i] = dir->d_name[i];
+        pth[len + dlen] = '/';
+        pth[len + dlen + 1] = '\0';
+        DIR *tmp = opendir(pth);
+        if (!tmp){
+            for (int i = 0; i < cdp - 1; i ++)
+                printf("     ");
+            if (cdp)
+                printf("|____");
+            printf("%s\n", dir->d_name);
+        }
+    }
+    pth[len] = '\0';
+    d = opendir(pth);
+    while ((dir = readdir(d)) != NULL){
+        if (dir->d_name[0] == '.')
+            continue;
+        int dlen = strlen(dir->d_name);
+        for (int i = 0; i < dlen; i ++)
+            pth[len + i] = dir->d_name[i];
+        pth[len + dlen] = '/';
+        pth[len + dlen + 1] = '\0';
+        DIR *tmp = opendir(pth);
+        if (tmp){
+            for (int i = 0; i < cdp - 1; i ++)
+                printf("     ");
+            if (cdp)
+                printf("|____");
+            printf("%s:\n", dir->d_name);
+            tree(pth, dep - 1, cdp + 1);
+        }
+    }
 }
 
 int main(){
