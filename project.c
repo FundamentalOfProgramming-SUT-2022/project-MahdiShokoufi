@@ -106,7 +106,6 @@ int cat(char *pth){
     char s[MAX_N];
     while (fgets(s, MAX_N, f) != NULL)
         printf("%s", s);
-    printf("\n");
     fclose(f);
     return 1; //successfull
 }
@@ -129,11 +128,15 @@ int removeStr(char *pth, int line, int indx, int size, int dir){
         }
     }
     fclose(f);
+    if (pos == -1)
+        return -10; //wrong pos
     int st, en;
     if (dir == -1)
         st = pos - size, en = pos; //backward
     else
         st = pos, en = pos + size; //forward
+    st = st < 0 ? 0 : st;
+    en = en > ptr ? ptr : en;
     f = fopen(pth, "w");
     for (int i = 0; i < st; i ++)
         fputc(txt[i], f);
@@ -161,34 +164,30 @@ int copy(char *pth, int line, int indx, int size, int dir){
         }
     }
     fclose(f);
+    if (pos == -1)
+        return -10; //wrong pos
     int st, en;
     if (dir == -1)
         st = pos - size, en = pos; //backward
     else
         st = pos, en = pos + size; //forward
+    st = st < 0 ? 0 : st;
+    en = en > ptr ? ptr : en;
     for (int i = st; i < en; i ++)
         clipboard[i - st] = txt[i];
-    clipboard[size] = '\0';
+    clipboard[en - st] = '\0';
     return 1; //successfull
 }
 
 int cut(char *pth, int line, int indx, int size, int dir){
-    if (!isPathExist(pth))
-        return -1; //wrong path
-    if (!isFileExist(pth))
-        return -2; //wrong file
-    copy(pth, line, indx, size, dir);
-    removeStr(pth, line, indx, size, dir);
-    return 1; //successfull 
+    int stat = copy(pth, line, indx, size, dir);
+    if (stat != 1) //error
+        return stat;
+    return removeStr(pth, line, indx, size, dir);
 }
 
 int paste(char *pth, int line, int indx){
-    if (!isPathExist(pth))
-        return -1; //wrong path
-    if (!isFileExist(pth))
-        return -2; //wrong file
-    insertStr(pth, clipboard, line, indx);
-    return 1; //successfull
+    return insertStr(pth, clipboard, line, indx);
 }
 
 int compare(char *pth1, char *pth2){
@@ -231,11 +230,8 @@ int compare(char *pth1, char *pth2){
         while (flg1)
             flg1 = fgets(tmp[++ ptr], MAX_N, f1) != NULL;
         printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", line, line + ptr - 1);
-        for (int i = 0; i < ptr; i ++){
+        for (int i = 0; i < ptr; i ++)
             printf("%s", tmp[i]);
-            if (tmp[i][strlen(tmp[i]) - 1] != '\n')
-                printf("\n");
-        }
     }
     if (flg2){
         char tmp[MAX_N][MAX_N];
@@ -247,11 +243,8 @@ int compare(char *pth1, char *pth2){
         while (flg2)
             flg2 = fgets(tmp[++ ptr], MAX_N, f2) != NULL;
         printf(">>>>>>>>>>>> #%d - #%d >>>>>>>>>>>>\n", line, line + ptr - 1);
-        for (int i = 0; i < ptr; i ++){
+        for (int i = 0; i < ptr; i ++)
             printf("%s", tmp[i]);
-            if (tmp[i][strlen(tmp[i]) - 1] != '\n')
-                printf("\n");
-        }
     }
     fclose(f1);
     fclose(f2);
