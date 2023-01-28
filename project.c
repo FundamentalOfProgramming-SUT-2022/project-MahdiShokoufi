@@ -5,7 +5,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-char clipboard[1000 * 1000];
+#define MAX_N 1010
+
+char clipboard[MAX_N * MAX_N];
 
 int parse(){
     return 1;
@@ -24,7 +26,7 @@ int isPathExist(char *pth){
     //pth: root/sth/A.txt
     struct stat st;
     int len = strlen(pth);
-    char cur[1000];
+    char cur[MAX_N];
     for (int i = 0; i < len; i ++){
         cur[i] = pth[i];
         cur[i + 1] = '\0';
@@ -42,7 +44,7 @@ int createFile(char *pth){
     if (isFileExist(pth))
         return -1;
     int len = strlen(pth);
-    char cur[1000];
+    char cur[MAX_N];
     //pth: "root/sth/A.txt"
     //create directories
     for (int i = 0; i < len; i ++){
@@ -62,9 +64,9 @@ int insertStr(char *pth, char *str, int line, int indx){
     if (!isFileExist(pth))
         return -2; //wrong file
     FILE *f = fopen(pth, "r");
-    char txt[1000][1000], tmp[1000];
+    char txt[MAX_N][MAX_N], tmp[MAX_N];
     int cntLine = 0;
-    for (int i = 1; fgets(txt[i], 1000, f) != NULL; i ++, cntLine ++);
+    for (int i = 1; fgets(txt[i], MAX_N, f) != NULL; i ++, cntLine ++);
     for (int i = 0; i < indx; i ++)
         tmp[i] = txt[line][i];
     int strLen = strlen(str), lineLen = strlen(txt[line]);
@@ -91,8 +93,8 @@ int cat(char *pth){
     if (!isFileExist(pth))
         return -2; //wrong file
     FILE *f = fopen(pth, "r");
-    char s[1000];
-    while (fgets(s, 1000, f) != NULL)
+    char s[MAX_N];
+    while (fgets(s, MAX_N, f) != NULL)
         printf("%s", s);
     printf("\n");
     fclose(f);
@@ -105,9 +107,9 @@ int removeStr(char *pth, int line, int indx, int size, int dir){
     if (!isFileExist(pth))
         return -2; //wrong file
     FILE *f = fopen(pth, "r");
-    char txt[1000 * 1000], tmp[1000];
+    char txt[MAX_N * MAX_N], tmp[MAX_N];
     int ptr = 0, curLine = 0, pos = -1;
-    while (fgets(tmp, 1000, f) != NULL){
+    while (fgets(tmp, MAX_N, f) != NULL){
         int len = strlen(tmp);
         curLine ++;
         for (int i = 0; i < len; i ++){
@@ -137,9 +139,9 @@ int copy(char *pth, int line, int indx, int size, int dir){
     if (!isFileExist(pth))
         return -2; //wrong file
     FILE *f = fopen(pth, "r");
-    char txt[1000 * 1000], tmp[1000];
+    char txt[MAX_N * MAX_N], tmp[MAX_N];
     int ptr = 0, curLine = 0, pos = -1;
-    while (fgets(tmp, 1000, f) != NULL){
+    while (fgets(tmp, MAX_N, f) != NULL){
         int len = strlen(tmp);
         curLine ++;
         for (int i = 0; i < len; i ++){
@@ -190,9 +192,9 @@ int compare(char *pth1, char *pth2){
         return -4; //wrong file2
     FILE *f1 = fopen(pth1, "r");
     FILE *f2 = fopen(pth2, "r");
-    char s1[1000], s2[1000];
-    int flg1 = fgets(s1, 1000, f1) != NULL;
-    int flg2 = fgets(s2, 1000, f2) != NULL;
+    char s1[MAX_N], s2[MAX_N];
+    int flg1 = fgets(s1, MAX_N, f1) != NULL;
+    int flg2 = fgets(s2, MAX_N, f2) != NULL;
     int line = 0;
     while (flg1 && flg2){
         line ++;
@@ -205,19 +207,19 @@ int compare(char *pth1, char *pth2){
             if (s2[strlen(s2) - 1] != '\n')
                 printf("\n");
         }
-        flg1 = fgets(s1, 1000, f1) != NULL;
-        flg2 = fgets(s2, 1000, f2) != NULL;
+        flg1 = fgets(s1, MAX_N, f1) != NULL;
+        flg2 = fgets(s2, MAX_N, f2) != NULL;
     }
     line ++;
     if (flg1){
-        char tmp[1000][1000];
+        char tmp[MAX_N][MAX_N];
         int len = strlen(s1);
         for (int i = 0; i < len; i ++)
             tmp[0][i] = s1[i];
         tmp[0][len] = '\0';
         int ptr = 0;
         while (flg1)
-            flg1 = fgets(tmp[++ ptr], 1000, f1) != NULL;
+            flg1 = fgets(tmp[++ ptr], MAX_N, f1) != NULL;
         printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", line, line + ptr - 1);
         for (int i = 0; i < ptr; i ++){
             printf("%s", tmp[i]);
@@ -226,14 +228,14 @@ int compare(char *pth1, char *pth2){
         }
     }
     if (flg2){
-        char tmp[1000][1000];
+        char tmp[MAX_N][MAX_N];
         int len = strlen(s2);
         for (int i = 0; i < len; i ++)
             tmp[0][i] = s2[i];
         tmp[0][len] = '\0';
         int ptr = 0;
         while (flg2)
-            flg2 = fgets(tmp[++ ptr], 1000, f2) != NULL;
+            flg2 = fgets(tmp[++ ptr], MAX_N, f2) != NULL;
         printf(">>>>>>>>>>>> #%d - #%d >>>>>>>>>>>>\n", line, line + ptr - 1);
         for (int i = 0; i < ptr; i ++){
             printf("%s", tmp[i]);
