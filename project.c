@@ -67,6 +67,17 @@ int insertStr(char *pth, char *str, int line, int indx){
     char txt[MAX_N][MAX_N], tmp[MAX_N];
     int cntLine = 0;
     for (int i = 1; fgets(txt[i], MAX_N, f) != NULL; i ++, cntLine ++);
+    fclose(f);
+    if (cntLine == 0){ //handle empty files
+        if (line != 1 || indx != 0)
+            return -10; //wrong pos
+        f = fopen(pth, "w");
+        fputs(str, f);
+        fclose(f);
+        return 1; //successfull
+    }
+    if (cntLine < line || strlen(txt[line]) < indx)
+        return -10; //wrong pos
     for (int i = 0; i < indx; i ++)
         tmp[i] = txt[line][i];
     int strLen = strlen(str), lineLen = strlen(txt[line]);
@@ -75,7 +86,6 @@ int insertStr(char *pth, char *str, int line, int indx){
     for (int i = indx; i < lineLen; i ++)
         tmp[i + strLen] = txt[line][i];
     tmp[lineLen + strLen] = '\0';
-    fclose(f);
     f = fopen(pth, "w");
     for (int i = 1; i <= cntLine; i ++){
         if (i == line)
