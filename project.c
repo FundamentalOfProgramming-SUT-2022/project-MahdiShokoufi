@@ -347,6 +347,92 @@ int grep(char *str, int n, char pth[MAX_N][MAX_N], int _c, int _l){
     return 1; //successfull
 }
 
+int autoIndent(char *pth){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    FILE *f = fopen(pth, "r");
+    char txt[MAX_N][MAX_N];
+    int cntLine = 0;
+    for (int i = 1; fgets(txt[i], MAX_N, f) != NULL; i ++, cntLine ++);
+    fclose(f);
+    int cntOpn = 0;
+    for (int i = 1; i <= cntLine; i ++){
+        int len = strlen(txt[i]);
+        for (int j = 0; j < len; j ++){
+            if (txt[i][j] == '{')
+                cntOpn ++;
+            if (txt[i][j] == '}')
+                cntOpn --;
+            if (cntOpn < 0)
+                return -3; //wrong braces
+        }
+    }
+    if (cntOpn)
+        return -3; //wrong braces
+    char res[MAX_N][MAX_N];
+    int curLine = 1, ptr = 0;
+    for (int i = 1; i <= cntLine; i ++){
+        int len = strlen(txt[i]), j = 0;
+        while (j < len){
+            if (ptr == 0 && (txt[i][j] == ' ' || txt[i][j] == '\t' || txt[i][j] == '\n')){
+                while (j < len && (txt[i][j] == ' ' || txt[i][j] == '\t' || txt[i][j] == '\n'))
+                    j ++;
+                continue;
+            }
+            if (txt[i][j] == '{'){
+                while (ptr >= 1 && (res[curLine][ptr - 1] == ' ' || res[curLine][ptr - 1] == '\t' || res[curLine][ptr - 1] == '\n'))
+                    ptr --;
+                if (ptr > 0)
+                    res[curLine][ptr ++] = ' ';
+                if (ptr == 0)
+                    for (int k = 0; k < cntOpn; k ++)
+                        res[curLine][ptr ++] = '\t';
+                res[curLine][ptr ++] = '{';
+                res[curLine][ptr ++] = '\n';
+                res[curLine][ptr ++] = '\0';
+                curLine ++; ptr = 0;
+                j ++;
+                cntOpn ++;
+            }
+            else if (txt[i][j] == '}'){
+                while (ptr >= 1 && (res[curLine][ptr - 1] == ' ' || res[curLine][ptr - 1] == '\t' || res[curLine][ptr - 1] == '\n'))
+                    ptr --;
+                if (ptr > 0){
+                    res[curLine][ptr ++] = '\n';
+                    res[curLine][ptr ++] = '\0';
+                    curLine ++; ptr = 0;
+                }
+                cntOpn --;
+                for (int k = 0; k < cntOpn; k ++)
+                    res[curLine][ptr ++] = '\t';
+                res[curLine][ptr ++] = '}';
+                res[curLine][ptr ++] = '\n';
+                res[curLine][ptr ++] = '\0';
+                curLine ++; ptr = 0;
+                j ++;
+            }
+            else{
+                if (ptr == 0)
+                    for (int k = 0; k < cntOpn; k ++)
+                        res[curLine][ptr ++] = '\t';
+                res[curLine][ptr ++] = txt[i][j];
+                if (txt[i][j] == '\n'){
+                    res[curLine][ptr ++] = '\0';
+                    curLine ++; ptr = 0;
+                }
+                j ++;
+            }
+        }
+    }
+    f = fopen(pth, "w");
+    for (int i = 1; i < curLine; i ++)
+        fputs(res[i], f);
+    fclose(f);
+    return 1; //successfull
+}
+
 int main(){
     int end = 0;
     while (!end)
