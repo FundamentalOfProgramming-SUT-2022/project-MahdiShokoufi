@@ -297,6 +297,56 @@ void tree(char *pth, int dep, int cdp){
     }
 }
 
+int grep(char *str, int n, char pth[MAX_N][MAX_N], int _c, int _l){
+    for (int i = 0; i < n; i ++)
+        if (!isPathExist(pth[i]))
+            return -1; //wrong path
+    for (int i = 0; i < n; i ++)
+        if (!isFileExist(pth[i]))
+            return -2; //wrong file
+    if (_c && _l)
+        return -3; //wrong options
+    int res = 0, len = strlen(str);
+    char s[MAX_N];
+    for (int i = 0; i < n; i ++){
+        FILE *f = fopen(pth[i], "r");
+        int flg_l = 0;
+        while (fgets(s, MAX_N, f) != NULL){
+            int ln = strlen(s), find = 0;
+            for (int j = 0; j + len - 1 < ln; j ++){
+                int flg = 1;
+                for (int k = 0; k < len; k ++){
+                    if (str[k] != s[j + k]){
+                        flg = 0;
+                        break;
+                    }
+                }
+                if (flg){
+                    find = 1;
+                    break;
+                }
+            }
+            if (!find)
+                continue;
+            if (_l){
+                printf("%s\n", pth[i]);
+                break;
+            }
+            if (_c)
+                res ++;
+            else{
+                printf("%s: %s", pth[i], s);
+                if (s[ln - 1] != '\n')
+                    printf("\n");
+            }
+        }
+        fclose(f);
+    }
+    if (_c)
+        printf("%d\n", res);
+    return 1; //successfull
+}
+
 int main(){
     int end = 0;
     while (!end)
