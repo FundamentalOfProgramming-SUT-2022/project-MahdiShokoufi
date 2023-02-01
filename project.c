@@ -559,6 +559,32 @@ int find(char *pth, char *str, int _cnt, int _at, int _byw, int _all){
     return 1; //successfull
 }
 
+int replace(char *pth, char *str1, char *str2, int _at, int _all){
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    if (_at && _all)
+        return -3; //wrong options
+    if (!_at && !_all)
+        _at = 1;
+    find(pth, str1, 0, 0, 0, 0);
+    if (fndPtr == 0 || fndPtr < _at)
+        return -4; //not found
+    if (_at){
+        _at --;
+        removeStr(pth, fnd[_at][0], fnd[_at][1], fnd[_at][2] - fnd[_at][1], 1);
+        insertStr(pth, str2, fnd[_at][0], fnd[_at][1]);
+    }
+    else{
+        for (int i = fndPtr - 1; i >= 0; i --){
+            removeStr(pth, fnd[i][0], fnd[i][1], fnd[i][2] - fnd[i][1], 1);
+            insertStr(pth, str2, fnd[i][0], fnd[i][1]);
+        }
+    }
+    return 1; //successfull
+}
+
 int main(){
     int end = 0;
     while (!end)
