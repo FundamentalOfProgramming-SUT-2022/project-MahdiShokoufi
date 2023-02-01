@@ -4,10 +4,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <stdlib.h>
 
 #define MAX_N 1010
 
 char clipboard[MAX_N * MAX_N];
+int fnd[MAX_N * MAX_N][4], fndPtr;
 
 int parse(){
     return 1;
@@ -430,6 +432,130 @@ int autoIndent(char *pth){
     for (int i = 1; i < curLine; i ++)
         fputs(res[i], f);
     fclose(f);
+    return 1; //successfull
+}
+
+int find(char *pth, char *str, int _cnt, int _at, int _byw, int _all){
+    fndPtr = 0;
+    if (!isPathExist(pth))
+        return -1; //wrong path
+    if (!isFileExist(pth))
+        return -2; //wrong file
+    if ((_cnt && (_at || _byw || _all)) || (_at && _all))
+        return -3; //wrong options
+    int len = strlen(str);
+    int pos = -1;
+    for (int i = 0; i < len ; i++)
+        if (str[i] == '*' && !(i > 0 && str[i - 1] == '\\'))
+            pos = i;
+    int spcFlg = 0;
+    for (int i = pos + 1; i < len; i ++)
+        if (str[i] == ' ')
+            spcFlg = 1;
+    int begFlg = (pos > 0 && str[pos - 1] == ' ') || (pos == 0);
+    int endFlg = (pos != -1 && pos + 1 < len && str[pos + 1] == ' ') || (pos == len - 1);
+    int sPtr = 0;
+    for (int i = 0; i < len; i ++)
+        if (!(str[i] == '\\' && i + 1 < len && str[i + 1] == '*'))
+            str[sPtr ++] = str[i];
+    str[sPtr] = '\0';
+    len = sPtr;
+    FILE *f = fopen(pth, "r");
+    char txt[MAX_N][MAX_N];
+    int cntLine = 0, wrdCnt = 0;
+    int **byWrd = malloc(MAX_N * sizeof(int *));
+    for (int i = 0; i < MAX_N; i ++)
+        byWrd[i] = malloc(MAX_N * sizeof(int));
+    for (int i = 1; fgets(txt[i], MAX_N, f) != NULL; i ++, cntLine ++);
+    fclose(f);
+    for (int i = 1; i <= cntLine; i ++){
+        int lenT = strlen(txt[i]);
+        byWrd[i][0] = (lenT == 1 && txt[i][0] == '\n') ? wrdCnt : (++ wrdCnt);
+        for (int j = 1; j < lenT; j ++){
+            if (txt[i][j] == ' ' && txt[i][j - 1] != ' ')
+                wrdCnt ++;
+            byWrd[i][j] = wrdCnt;
+        }
+    }
+    for (int curLine = 1; curLine <= cntLine; curLine ++){
+        int curLen = strlen(txt[curLine]), curIndx = 0;
+        while (curIndx < curLen){
+            int fndFlg = 1, st = -1, en = -1;
+            if (begFlg && !spcFlg){ //A B *a
+                while (curIndx < curLen && txt[curLine][curIndx] == ' ')
+                    curIndx ++;
+                int endWrd = curIndx;
+                while (endWrd < curLen && txt[curLine][endWrd] != ' ')
+                    endWrd ++;
+                if (curIndx - pos < 0)
+                    fndFlg = 0;
+                for (int i = 0; i < pos && fndFlg; i ++)
+                    if (txt[curLine][curIndx - 1 - i] != str[pos - 1 - i])
+                        fndFlg = 0;
+                if (fndFlg){
+                    fndFlg = 0;
+                    for (int i = endWrd; i - len + pos + 1 >= curIndx && !fndFlg; i --){
+                        fndFlg = 1;
+                        for (int j = 0; j < len - (pos + 1); j ++)
+                            if (str[len - j - 1] != txt[curLine][i - j - 1])
+                                fndFlg = 0;
+                        if (fndFlg)
+                            en = i;
+                    }
+                    if (fndFlg)
+                        st = curIndx - pos;
+                }
+            }
+            else{
+                int L = pos + 1, R = len; //A or A *a B
+                if (endFlg) //A a* B
+                    L = 0, R = pos;
+                if (curIndx + (R - L) - 1 >= curLen)
+                    fndFlg = 0;
+                for (int i = 0; i < R - L && fndFlg; i ++)
+                    if (txt[curLine][curIndx + i] != str[L + i])
+                        fndFlg = 0;
+                if (pos == -1 && fndFlg) //A
+                    st = curIndx, en = curIndx + len;
+                if (begFlg && fndFlg){ //A *a B
+                    int i = curIndx - 1;
+                    while (0 <= i && txt[curLine][i] != ' ')
+                        i --;
+                    L = 0; R = pos;
+                    if (i - (R - L - 1) < 0)
+                        fndFlg = 0;
+                    for (int j = 0; j < R - L && fndFlg; j ++)
+                        if (txt[curLine][i - j] != str[R - 1 - j])
+                            fndFlg = 0;
+                    if (fndFlg)
+                        st = i - (R - L - 1), en = curIndx + len - pos - 1;
+                }
+                if (endFlg && fndFlg){ //A a* B
+                    int i = curIndx + R - L;
+                    while (i < curLen && (txt[curLine][i] != ' ' && txt[curLine][i] != '\n'))
+                        i ++;
+                    L = pos + 1; R = len;
+                    if (i + (R - L) - 1 >= curLen)
+                        fndFlg = 0;
+                    for (int j = 0; j < R - L && fndFlg; j ++)
+                        if (txt[curLine][i + j] != str[L + j])
+                            fndFlg = 0;
+                    if (fndFlg)
+                        st = curIndx, en = i + (R - L);
+                }
+            }
+            if (fndFlg && (fndPtr <= 0 || !(fnd[fndPtr - 1][0] == curLine && fnd[fndPtr - 1][1] < en && st < fnd[fndPtr - 1][2]))){
+                fnd[fndPtr][0] = curLine;
+                fnd[fndPtr][1] = st;
+                fnd[fndPtr][2] = en;
+                fnd[fndPtr][3] = byWrd[curLine][st];
+                fndPtr ++;
+                curIndx = en - 1;
+            }
+            curIndx ++;
+        }
+    }
+    free(byWrd);
     return 1; //successfull
 }
 
