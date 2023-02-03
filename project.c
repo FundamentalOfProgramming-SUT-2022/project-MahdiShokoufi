@@ -1091,7 +1091,6 @@ int parse(){
             printf("replaced successfully\n");
     }
     free(inp);
-    //Handle =D command
     return 0;
 }
 
