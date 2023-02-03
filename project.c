@@ -1,6 +1,5 @@
 //In the name of Allah
 #include <stdio.h>
-#include <io.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -79,7 +78,7 @@ int createFile(char *pth){
         cur[i] = pth[i];
         cur[i + 1] = '\0';
         if (cur[i] == '/')
-            mkdir(cur);
+            mkdir(cur, 0777);
     }
     FILE *f = fopen(pth, "w");
     fclose(f);
@@ -88,7 +87,7 @@ int createFile(char *pth){
         cur[i] = pth[i];
         cur[i + 1] = '\0';
         if (cur[i] == '/')
-            mkdir(cur);
+            mkdir(cur, 0777);
     }
     f = fopen(pth, "w");
     fclose(f);
@@ -893,8 +892,10 @@ int parse(){
                     buff_putc('\n');
                 }
             }
-            if (cur == tot)
+            if (cur == tot){
+                buff[buffPtr] = '\0';
                 printf("%s", buff);
+            }
         }
     }
     else if (!strcmp(inp[0], "replace")){
