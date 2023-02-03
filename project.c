@@ -8,14 +8,37 @@
 
 #define MAX_N 1010
 
-char clipboard[MAX_N * MAX_N];
-int fnd[MAX_N * MAX_N][4], fndPtr;
+char clipboard[MAX_N * MAX_N], buff[MAX_N * MAX_N];
+int fnd[MAX_N * MAX_N][4], fndPtr, buffPtr;
 
 int toInt(char *str){
     int num = 0, len = strlen(str);
     for (int i = 0; i < len; i ++)
         num = num * 10 + (str[i] - '0');
     return num;
+}
+
+void buff_putc(char c){
+    buff[buffPtr ++] = c;
+}
+
+void buff_puts(char *s){
+    int len = strlen(s);
+    for (int i = 0; i < len; i ++)
+        buff_putc(s[i]);
+}
+
+void buff_putd(int d){
+    if (d == 0)
+        return buff_putc('0');
+    int a[10], i = 0;
+    while (d){
+        a[i ++] = d % 10;
+        d /= 10;
+    }
+    i --;
+    while (i >= 0)
+        buff_putc('0' + a[i --]);
 }
 
 int isFileExist(char *pth){
@@ -166,9 +189,9 @@ int cat(char *pth){
     FILE *f = fopen(pth, "r");
     char s[MAX_N];
     while (fgets(s, MAX_N, f) != NULL){
-        printf("%s", s);
+        buff_puts(s);
         if (s[strlen(s) - 1] != '\n')
-            printf("\n");
+            buff_putc('\n');
     }
     fclose(f);
     return 1; //successfull
@@ -270,13 +293,15 @@ int compare(char *pth1, char *pth2){
     while (flg1 && flg2){
         line ++;
         if (strcmp(s1, s2)){
-            printf("============ #%d ============\n", line);
-            printf("%s", s1);
+            buff_puts("============ #");
+            buff_putd(line);
+            buff_puts(" ============\n");
+            buff_puts(s1);
             if (s1[strlen(s1) - 1] != '\n')
-                printf("\n");
-            printf("%s", s2);
+                buff_putc('\n');
+            buff_puts(s2);
             if (s2[strlen(s2) - 1] != '\n')
-                printf("\n");
+                buff_putc('\n');
         }
         flg1 = fgets(s1, MAX_N, f1) != NULL;
         flg2 = fgets(s2, MAX_N, f2) != NULL;
@@ -291,11 +316,15 @@ int compare(char *pth1, char *pth2){
         int ptr = 0;
         while (flg1)
             flg1 = fgets(tmp[++ ptr], MAX_N, f1) != NULL;
-        printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", line, line + ptr - 1);
+        buff_puts("<<<<<<<<<<<< #");
+        buff_putd(line);
+        buff_puts(" - #");
+        buff_putd(line + ptr - 1);
+        buff_puts(" <<<<<<<<<<<<\n");
         for (int i = 0; i < ptr; i ++){
-            printf("%s", tmp[i]);
+            buff_puts(tmp[i]);
             if (tmp[i][strlen(tmp[i]) - 1] != '\n')
-                printf("\n");
+                buff_putc('\n');
         }
     }
     if (flg2){
@@ -307,11 +336,15 @@ int compare(char *pth1, char *pth2){
         int ptr = 0;
         while (flg2)
             flg2 = fgets(tmp[++ ptr], MAX_N, f2) != NULL;
-        printf(">>>>>>>>>>>> #%d - #%d >>>>>>>>>>>>\n", line, line + ptr - 1);
+        buff_puts(">>>>>>>>>>>> #");
+        buff_putd(line);
+        buff_puts(" - #");
+        buff_putd(line + ptr - 1);
+        buff_puts(" >>>>>>>>>>>>\n");
         for (int i = 0; i < ptr; i ++){
-            printf("%s", tmp[i]);
+            buff_puts(tmp[i]);
             if (tmp[i][strlen(tmp[i]) - 1] != '\n')
-                printf("\n");
+                buff_putc('\n');
         }
     }
     fclose(f1);
@@ -337,10 +370,11 @@ void tree(char *pth, int dep, int cdp){
         DIR *tmp = opendir(pth);
         if (!tmp){
             for (int i = 0; i < cdp - 1; i ++)
-                printf("     ");
+                buff_puts("     ");
             if (cdp)
-                printf("|____");
-            printf("%s\n", dir->d_name);
+                buff_puts("|____");
+            buff_puts(dir->d_name);
+            buff_putc('\n');
         }
     }
     pth[len] = '\0';
@@ -356,10 +390,11 @@ void tree(char *pth, int dep, int cdp){
         DIR *tmp = opendir(pth);
         if (tmp){
             for (int i = 0; i < cdp - 1; i ++)
-                printf("     ");
+                buff_puts("     ");
             if (cdp)
-                printf("|____");
-            printf("%s:\n", dir->d_name);
+                buff_puts("|____");
+            buff_puts(dir->d_name);
+            buff_puts(":\n");
             tree(pth, dep - 1, cdp + 1);
         }
     }
@@ -397,21 +432,26 @@ int grep(char *str, int n, char pth[MAX_N][MAX_N], int _c, int _l){
             if (!find)
                 continue;
             if (_l){
-                printf("%s\n", pth[i]);
+                buff_puts(pth[i]);
+                buff_putc('\n');
                 break;
             }
             if (_c)
                 res ++;
             else{
-                printf("%s: %s", pth[i], s);
+                buff_puts(pth[i]);
+                buff_puts(": ");
+                buff_puts(s);
                 if (s[ln - 1] != '\n')
-                    printf("\n");
+                    buff_putc('\n');
             }
         }
         fclose(f);
     }
-    if (_c)
-        printf("%d\n", res);
+    if (_c){
+        buff_putd(res);
+        buff_putc('\n');
+    }
     return 1; //successfull
 }
 
@@ -663,6 +703,7 @@ int replace(char *pth, char *str1, char *str2, int _at, int _all){
 }
 
 int parse(){
+    buffPtr = 0;
     char c;
     char **inp = malloc(MAX_N * sizeof(char *));
     for (int i = 0; i < MAX_N; i ++)
@@ -734,6 +775,10 @@ int parse(){
             printf("no such directories\n");
         if (stat == -2)
             printf("no such file\n");
+        if (stat == 1 && cur == tot){
+            buff[buffPtr] = '\0';
+            printf("%s", buff);
+        }
     }
     else if (!strcmp(inp[0], "removestr")){
         //removestr --file /root/... -pos line:indx -size size -b | -f
@@ -826,22 +871,30 @@ int parse(){
             printf("wrong options\n");
         if (stat == 1){
             if (_count)
-                printf("%d\n", fndPtr);
+                buff_putd(fndPtr);
             if (_at){
                 if (_at > fndPtr)
-                    printf("-1\n");
-                else
-                    printf("%d\n", fnd[_at - 1][3]);
+                    buff_puts("-1\n");
+                else{
+                    buff_putd(fnd[_at - 1][3]);
+                    buff_putc('\n');
+                }
             }
             if (_all){
                 if (fndPtr == 0)
-                    printf("nothing\n");
+                    buff_puts("nothing\n");
                 else{
-                    for (int i = 0; i < fndPtr - 1; i ++)
-                        printf("%d, ", fnd[i][3]);
-                    printf("%d\n", fnd[fndPtr - 1][3]);
+                    for (int i = 0; i < fndPtr - 1; i ++){
+                        buff_putd(fnd[i][3]);
+                        buff_puts(", ");
+                    }
+                    //printf("%d\n", fnd[fndPtr - 1][3]);
+                    buff_putd(fnd[fndPtr - 1][3]);
+                    buff_putc('\n');
                 }
             }
+            if (cur == tot)
+                printf("%s", buff);
         }
     }
     else if (!strcmp(inp[0], "replace")){
@@ -890,6 +943,10 @@ int parse(){
             printf("no such file\n");
         if (stat == -3)
             printf("wrong options\n");
+        if (stat == 1 && cur == tot){
+            buff[buffPtr] = '\0';
+            printf("%s", buff);
+        }
     }
     else if (!strcmp(inp[0], "undo")){
         //undo --file /root/...
@@ -916,6 +973,10 @@ int parse(){
             printf("no such directories\n");
         if (stat == -2)
             printf("no such file\n");
+        if (stat == 1 && cur == tot){
+            buff[buffPtr] = '\0';
+            printf("%s", buff);
+        }
     }
     else if (!strcmp(inp[0], "tree")){
         //tree depth
@@ -926,6 +987,10 @@ int parse(){
             char *pth = malloc(MAX_N * sizeof(char));
             pth[0] = 'r'; pth[1] = pth[2] = 'o'; pth[3] = 't'; pth[4] = '/'; pth[5] = '\0';
             tree(pth, dep, 0);
+            if (cur == tot){
+                buff[buffPtr] = '\0';
+                printf("%s", buff);
+            }
             free(pth);
         } 
     }
@@ -938,6 +1003,94 @@ int parse(){
         free(inp);
         return 0;
     }
+    if (cur == tot){
+        free(inp);
+        return 0;
+    }
+    if (!strcmp(inp[cur + 1], "insertstr")){
+        //insertstr --file /root/... -pos line:indx
+        int line = 0, indx = 0, i = 0;
+        for (; inp[cur + 5][i] != ':'; i ++)
+            line = line * 10 + (inp[cur + 5][i] - '0');
+        for (i ++; i < strlen(inp[cur + 5]); i ++)
+            indx = indx * 10 + (inp[cur + 5][i] - '0');
+        buff[buffPtr] = '\0';
+        int stat = insertStr(inp[cur + 3] + 1, buff, line, indx, 1);
+        if (stat == -1)
+            printf("no such directories\n");
+        if (stat == -2)
+            printf("no such file\n");
+        if (stat == -10)
+            printf("wrong line number or start position\n");
+    }
+    if (!strcmp(inp[cur + 1], "find")){
+        //find --file /root/... -count | -at | -byword | -all
+        int _count = 0, _at = 0, _byword = 0, _all = 0;
+        for (int i = cur + 4; i < tot; i ++){
+            if (!strcmp(inp[i], "-count"))
+                _count = 1;
+            if (!strcmp(inp[i], "-at"))
+                _at = toInt(inp[i + 1]);
+            if (!strcmp(inp[i], "-byword"))
+                _byword = 1;
+            if (!strcmp(inp[i], "-all"))
+                _all = 1;
+        }
+        if (!_count && !_at && !_all)
+            _at = 1;
+        buff[buffPtr] = '\0';
+        int stat = find(inp[cur + 3] + 1, buff, _count, _at, _byword, _all);
+        if (stat == -1)
+            printf("no such directories\n");
+        if (stat == -2)
+            printf("no such file\n");
+        if (stat == -3)
+            printf("wrong options\n");
+        if (stat == 1){
+            if (_count)
+                printf("%d\n", fndPtr);
+            if (_at){
+                if (_at > fndPtr)
+                    printf("-1\n");
+                else
+                    printf("%d\n", fnd[_at - 1][3]);
+            }
+            if (_all){
+                if (fndPtr == 0)
+                    printf("nothing\n");
+                else{
+                    for (int i = 0; i < fndPtr - 1; i ++)
+                        printf("%d, ", fnd[i][3]);
+                    printf("%d\n", fnd[fndPtr - 1][3]);
+                }
+            }
+        }
+    }
+    if (!strcmp(inp[cur + 1], "replace")){
+        //replace --str2 str2 --file /root/... -at | -all
+        int _at = 0, _all = 0;
+        for (int i = cur + 6; i < tot; i ++){
+            if (!strcmp(inp[i], "-at"))
+                _at = toInt(inp[i + 1]);
+            if (!strcmp(inp[i], "-all"))
+                _all = 1;
+        }
+        if (!_at && !_all)
+            _at = 1;
+        buff[buffPtr] = '\0';
+        int stat = replace(inp[cur + 5] + 1, buff, inp[cur + 3], _at, _all);
+        if (stat == -1)
+            printf("no such directories\n");
+        if (stat == -2)
+            printf("no such file\n");
+        if (stat == -3)
+            printf("wrong options\n");
+        if (stat == -4)
+            printf("nothing found\n");
+        if (stat == 1)
+            printf("replaced successfully\n");
+    }
+    free(inp);
     //Handle =D command
     return 0;
 }
